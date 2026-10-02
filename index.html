@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Instrumento Visual - Presencia humana por Flow Field</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+</head>
+<body>
+
+  <div id="ui-container">
+    <strong>Controles Performativos:</strong><br>
+    [Click + Drag] Perturbar el campo y empujar el cuerpo<br>
+    [Mantener ESPACIO] Disolver la figura en ruido<br>
+    [ARRIBA / ABAJO] Memoria visual: <span id="val-mem"></span><br>
+    [ W / S ] Comprimir / Expandir anatomía<br>
+    [ C ] Paleta: <span id="val-mood"></span><br>
+    [ 1 ] Calma &nbsp;[ 2 ] Tensión &nbsp;[ 3 ] Expansión &nbsp;[ 0 ] Neutro: <span id="val-emo"></span><br>
+    [ L ] Cargar música &nbsp;[ P ] Play/Pausa &nbsp;[ D ] Demo &nbsp;[ [ ] ] Sensibilidad
+  </div>
+
+  <div id="audio-panel">
+    <button id="btn-load" tabindex="-1">🎵 Cargar música</button>
+    <button id="btn-play" tabindex="-1">▶ Play</button>
+    <button id="btn-demo" tabindex="-1">Demo</button>
+    <div id="track-name">Sin música (o arrastra un audio aquí)</div>
+    <div class="bar-row"><label>Graves</label><div class="bar"><div id="bar-bass" style="background:#f4a6b8"></div></div></div>
+    <div class="bar-row"><label>Medios</label><div class="bar"><div id="bar-mid" style="background:#c9b6f2"></div></div></div>
+    <div class="bar-row"><label>Agudos</label><div class="bar"><div id="bar-treble" style="background:#a9d8f0"></div></div></div>
+    <div class="bar-row"><label>Total</label><div class="bar"><div id="bar-level" style="background:#f5e6b8"></div></div></div>
+    <div class="bar-row"><label>Volumen</label><input type="range" id="vol" min="0" max="1" step="0.01" value="0.8" tabindex="-1"></div>
+    <div class="bar-row"><label>Sens.</label><button id="btn-sens-" tabindex="-1">−</button><button id="btn-sens+" tabindex="-1">+</button><span id="val-sens"></span></div>
+  </div>
+  <input type="file" id="audio-file" accept="audio/*" style="display:none">
+  <script src="sketch.js"></script>
+  
+</body>
+</html>
