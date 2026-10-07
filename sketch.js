@@ -744,6 +744,13 @@ function toggleUI() {
   const audioPanel = document.getElementById("audio-panel");
   if (uiContainer) uiContainer.classList.toggle("hidden", !uiVisible);
   if (audioPanel) audioPanel.classList.toggle("hidden", !uiVisible);
+  if (uiVisible) {
+    cursor();
+    document.body.style.cursor = "default";
+  } else {
+    noCursor();
+    document.body.style.cursor = "none";
+  }
 }
 
 function keyPressed() {
