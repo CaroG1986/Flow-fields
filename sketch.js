@@ -12,6 +12,7 @@ const EMBEDDED_AUDIO_BASE64 = "SUQzBAAAAAABClRYWFgAAAASAAADbWFqb3JfYnJhbmQAaXNvb
 //  ARRIBA / ABAJO ...... memoria visual (fade)
 //  W / S ............... comprimir / expandir la distancia cabeza-torso
 //  C ................... cambiar de paleta (mood)
+//  H ................... ocultar / mostrar interfaz
 // ============================================================
 
 // ---------- Parámetros generales ----------
@@ -597,8 +598,25 @@ class Agent {
 // ============================================================
 //  INTERACCIÓN
 // ============================================================
+let uiVisible = true;
+
+function toggleUI() {
+  uiVisible = !uiVisible;
+  const uiContainer = document.getElementById("ui-container");
+  const audioPanel = document.getElementById("audio-panel");
+  if (uiContainer) uiContainer.classList.toggle("hidden", !uiVisible);
+  if (audioPanel) audioPanel.classList.toggle("hidden", !uiVisible);
+}
+
 function keyPressed() {
-  if (keyCode === UP_ARROW) {
+  const activeTag = document.activeElement ? document.activeElement.tagName : "";
+  if (activeTag === "INPUT" || activeTag === "TEXTAREA" || activeTag === "SELECT" || (document.activeElement && document.activeElement.isContentEditable)) {
+    return;
+  }
+
+  if (key === "h" || key === "H") {
+    toggleUI();
+  } else if (keyCode === UP_ARROW) {
     fadeAlpha = min(40, fadeAlpha + 1);
     updateMemoryLabel();
   } else if (keyCode === DOWN_ARROW) {

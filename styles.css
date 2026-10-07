@@ -11,3 +11,4 @@ html, body { margin: 0; padding: 0; background-color: #0d0d0d; overflow: hidden;
     .bar-row label { width: 44px; }
     .bar { flex: 1; height: 5px; background: #222; border-radius: 3px; overflow: hidden; }
     .bar > div { height: 100%; width: 0%; }
+.hidden { display: none !important; }
