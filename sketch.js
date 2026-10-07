@@ -58,18 +58,24 @@ const C = {
 };
 // Cada mood: color principal + secundarios + pequeños acentos
 const MOODS = [
-  { name: "Rosa polvo",
+  {
+    name: "Rosa polvo",
     main: [C.rosaPastel, C.rosaPolvo],
     sec: [C.durazno, C.lavanda, C.crema],
-    acc: [C.celeste, C.mantequilla] },
-  { name: "Lavanda y cielo",
+    acc: [C.celeste, C.mantequilla]
+  },
+  {
+    name: "Lavanda y cielo",
     main: [C.lavanda, C.lila],
     sec: [C.celeste, C.azulPastel, C.rosaPastel],
-    acc: [C.mantequilla, C.durazno, C.blanco] },
-  { name: "Durazno y menta",
+    acc: [C.mantequilla, C.durazno, C.blanco]
+  },
+  {
+    name: "Durazno y menta",
     main: [C.durazno, C.coral],
     sec: [C.crema, C.salvia, C.menta],
-    acc: [C.lila, C.celeste] }
+    acc: [C.lila, C.celeste]
+  }
 ];
 let moodPos = 0, moodA, moodB, moodMix = 0;
 
@@ -79,10 +85,10 @@ let bodyScale = 1;
 
 // ---------- Estados emocionales ----------
 const EMOS = {
-  neutro:    { name: "Neutro",    flowSpeed: 1.0,  noiseAmp: 0.5,  tremor: 0, alphaMul: 1.0,  bodyScale: 1.0,  speedMul: 1.0,  accProb: 0.10 },
-  calma:     { name: "Calma",     flowSpeed: 0.45, noiseAmp: 0.32, tremor: 0, alphaMul: 0.9,  bodyScale: 1.0,  speedMul: 0.7,  accProb: 0.06 },
-  tension:   { name: "Tensión",   flowSpeed: 2.4,  noiseAmp: 1.15, tremor: 1, alphaMul: 1.05, bodyScale: 0.9,  speedMul: 1.35, accProb: 0.28 },
-  expansion: { name: "Expansión", flowSpeed: 1.1,  noiseAmp: 0.55, tremor: 0, alphaMul: 1.5,  bodyScale: 1.35, speedMul: 1.0,  accProb: 0.14 }
+  neutro: { name: "Neutro", flowSpeed: 1.0, noiseAmp: 0.5, tremor: 0, alphaMul: 1.0, bodyScale: 1.0, speedMul: 1.0, accProb: 0.10 },
+  calma: { name: "Calma", flowSpeed: 0.45, noiseAmp: 0.32, tremor: 0, alphaMul: 0.9, bodyScale: 1.0, speedMul: 0.7, accProb: 0.06 },
+  tension: { name: "Tensión", flowSpeed: 2.4, noiseAmp: 1.15, tremor: 1, alphaMul: 1.05, bodyScale: 0.9, speedMul: 1.35, accProb: 0.28 },
+  expansion: { name: "Expansión", flowSpeed: 1.1, noiseAmp: 0.55, tremor: 0, alphaMul: 1.5, bodyScale: 1.35, speedMul: 1.0, accProb: 0.14 }
 };
 let emoTarget = EMOS.neutro;
 let emo = Object.assign({}, EMOS.neutro);
@@ -177,7 +183,7 @@ function computeHomes() {
   // Mirada: la cabeza se inclina hacia el cursor; el torso la sigue con retraso (resorte)
   if (mouseSeen) {
     lookTarget.set(constrain((mouseX - cx) / (width * 0.5), -1, 1),
-                   constrain((mouseY - cy) / (height * 0.5), -1, 1));
+      constrain((mouseY - cy) / (height * 0.5), -1, 1));
   } else lookTarget.set(0, 0);
   look.x = lerp(look.x, lookTarget.x, 0.06);
   look.y = lerp(look.y, lookTarget.y, 0.06);
@@ -185,9 +191,9 @@ function computeHomes() {
   const ts = frameCount * 0.15;
   // Agudos -> cabeza vibra y sube; graves -> torso baja y se balancea
   headHome.set(cx + sin(t * 0.9) * 0.008 * S + look.x * 0.09 * S + sin(ts) * audio.treble * 0.025 * S,
-               cy - restDistance * 0.65 + sin(t * 1.3) * 0.004 * S + look.y * 0.035 * S - audio.treble * 0.04 * S);
+    cy - restDistance * 0.65 + sin(t * 1.3) * 0.004 * S + look.y * 0.035 * S - audio.treble * 0.04 * S);
   torsoHome.set(cx + sin(t * 0.7 + 1) * 0.006 * S + look.x * 0.025 * S + sin(ts * 0.4) * audio.bass * 0.02 * S,
-                cy + restDistance * 0.35 + cos(t * 1.1) * 0.005 * S + audio.bass * 0.05 * S);
+    cy + restDistance * 0.35 + cos(t * 1.1) * 0.005 * S + audio.bass * 0.05 * S);
 }
 
 function updateBodyPhysics() {
@@ -205,7 +211,7 @@ function updateBodyPhysics() {
     audio.beatFired = false;
   }
 
-  // Retorno suave a la posición de reposo
+  // Retorno suave a la posición de repo
   headVel.add(p5.Vector.sub(headHome, headPos).mult(0.02));
   torsoVel.add(p5.Vector.sub(torsoHome, torsoPos).mult(0.02));
 
@@ -631,15 +637,24 @@ function keyPressed() {
   } else if (key === "c" || key === "C") {
     moodPos = floor(moodPos) + 1;
     updateMoods();
-  } else if (key === "0") { emoTarget = EMOS.neutro;
-  } else if (key === "1") { emoTarget = EMOS.calma;
-  } else if (key === "2") { emoTarget = EMOS.tension;
-  } else if (key === "3") { emoTarget = EMOS.expansion;
-  } else if (key === "l" || key === "L") { document.getElementById("audio-file").click();
-  } else if (key === "p" || key === "P") { togglePlay();
-  } else if (key === "d" || key === "D") { toggleDemo();
-  } else if (key === "[") { audio.sens = max(0.3, audio.sens - 0.2);
-  } else if (key === "]") { audio.sens = min(3.0, audio.sens + 0.2);
+  } else if (key === "0") {
+    emoTarget = EMOS.neutro;
+  } else if (key === "1") {
+    emoTarget = EMOS.calma;
+  } else if (key === "2") {
+    emoTarget = EMOS.tension;
+  } else if (key === "3") {
+    emoTarget = EMOS.expansion;
+  } else if (key === "l" || key === "L") {
+    document.getElementById("audio-file").click();
+  } else if (key === "p" || key === "P") {
+    togglePlay();
+  } else if (key === "d" || key === "D") {
+    toggleDemo();
+  } else if (key === "[") {
+    audio.sens = max(0.3, audio.sens - 0.2);
+  } else if (key === "]") {
+    audio.sens = min(3.0, audio.sens + 0.2);
   }
   // evitar scroll de la página con espacio / flechas
   if (keyCode === 32 || keyCode === UP_ARROW || keyCode === DOWN_ARROW) return false;
@@ -691,7 +706,7 @@ function loadAudioFile(file, autoplay = true) {
     ensureAudioCtx();
     // limpiar la pista anterior
     if (audio.el) { audio.el.pause(); }
-    if (audio.source) { try { audio.source.disconnect(); } catch (e) {} audio.source = null; }
+    if (audio.source) { try { audio.source.disconnect(); } catch (e) { } audio.source = null; }
     if (audio.url) URL.revokeObjectURL(audio.url);
 
     audio.url = URL.createObjectURL(file);
@@ -716,7 +731,7 @@ function togglePlay() {
   if (audio.mode !== "file" || !audio.el) return;
   audio.pendingStart = false;
   ensureAudioCtx();
-  if (audio.el.paused) audio.el.play().catch(() => {}); else audio.el.pause();
+  if (audio.el.paused) audio.el.play().catch(() => { }); else audio.el.pause();
 }
 
 function toggleDemo() {
@@ -776,7 +791,7 @@ function startOnFirstGesture(e) {
   if (audio.pendingStart && audio.el && audio.mode === "file") {
     audio.pendingStart = false;
     ensureAudioCtx();
-    audio.el.play().catch(() => {});
+    audio.el.play().catch(() => { });
   }
 }
 
