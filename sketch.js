@@ -83,6 +83,11 @@ let moodPos = 0, moodA, moodB, moodMix = 0;
 let look, lookTarget, mouseSeen = false;
 let bodyScale = 1;
 
+// ---------- Ondas de Resonancia Corporal ----------
+let resonanceWaves = [];
+let waveCooldown = 0;
+const MAX_WAVES = 5;
+
 // ---------- Estados emocionales ----------
 const EMOS = {
   neutro: { name: "Neutro", flowSpeed: 1.0, noiseAmp: 0.5, tremor: 0, alphaMul: 1.0, bodyScale: 1.0, speedMul: 1.0, accProb: 0.10 },
@@ -144,6 +149,7 @@ function initLayout() {
   headVel.set(0, 0);
   torsoVel.set(0, 0);
   updateBodyGeometry();
+  resonanceWaves = [];
 }
 
 function draw() {
@@ -157,6 +163,7 @@ function draw() {
   updateEmotion();
   updateBodyPhysics();
   updateBodyGeometry();
+  updateAndDrawResonanceWaves();
   // el campo se recalcula cada 2 frames (mucho más liviano)
   if (frameCount % 2 === 0) updateFlowField();
 
@@ -208,6 +215,7 @@ function updateBodyPhysics() {
   if (audio.beatFired) {
     torsoVel.y -= 0.006 * S;
     headVel.y -= 0.004 * S;
+    triggerResonanceWave();
     audio.beatFired = false;
   }
 
@@ -369,6 +377,24 @@ function updateFlowField() {
       if (e3 < edgeM) vy += (1 - e3 / edgeM);
       if (e4 < edgeM) vy -= (1 - e4 / edgeM);
 
+      // ---------- Ondas de Resonancia (frente de onda en el campo) ----------
+      for (let wi = 0; wi < resonanceWaves.length; wi++) {
+        const w = resonanceWaves[wi];
+        const wdx = px - w.origin.x;
+        const wdy = py - w.origin.y;
+        const wd = Math.sqrt(wdx * wdx + wdy * wdy) + 0.0001;
+        const distFront = Math.abs(wd - w.radius);
+        if (distFront < w.bandWidth) {
+          const wFall = fall(distFront, w.bandWidth);
+          const k = wFall * w.energy * 1.1;
+          const ndx = wdx / wd, ndy = wdy / wd;
+          const curl = (noise(px * 0.006 + w.seed, py * 0.006, zoff * 0.5) - 0.5) * 0.9;
+          vx += (ndx * 1.1 - ndy * curl) * k;
+          vy += (ndy * 1.1 + ndx * curl) * k;
+          infl = max(infl, wFall * w.energy * 0.6);
+        }
+      }
+
       // ---------- Perturbación interactiva ----------
       if (mouseIsPressed && !keyIsDown(32)) {
         const dMouse = dist(px, py, mouseX, mouseY);
@@ -528,13 +554,30 @@ class Agent {
     this.acc.add(fx[i], fy[i]);
     this.infl = inflField[i];
 
-    // Beat: onda expansiva desde el cuerpo
+    // Beat: leve impulso corporal + propagación por Ondas de Resonancia
     if (audio.beat > 0.05) {
       const bx = this.pos.x - torsoPos.x, by = this.pos.y - (headPos.y + torsoPos.y) * 0.5;
       const bd = Math.sqrt(bx * bx + by * by) + 1;
-      const bk = audio.beat * 0.9 * this.infl;
+      const bk = audio.beat * 0.4 * this.infl;
       this.acc.x += (bx / bd) * bk;
       this.acc.y += (by / bd) * bk;
+    }
+
+    // Perturbación localizada por el frente de las ondas activas
+    for (let wi = 0; wi < resonanceWaves.length; wi++) {
+      const w = resonanceWaves[wi];
+      const wdx = this.pos.x - w.origin.x;
+      const wdy = this.pos.y - w.origin.y;
+      const wd = Math.sqrt(wdx * wdx + wdy * wdy) + 0.0001;
+      const distFront = Math.abs(wd - w.radius);
+      if (distFront < w.bandWidth) {
+        const wFall = fall(distFront, w.bandWidth);
+        const push = wFall * w.energy * 0.75;
+        const ndx = wdx / wd, ndy = wdy / wd;
+        this.acc.x += (ndx * 0.9 - ndy * 0.2) * push;
+        this.acc.y += (ndy * 0.9 + ndx * 0.2) * push;
+        this.life -= 0.12 * wFall;
+      }
     }
 
     // Interacción directa: el mouse "peina" los trazos cercanos
@@ -598,6 +641,95 @@ class Agent {
 
   isOffScreen() {
     return this.pos.x < 0 || this.pos.x > width || this.pos.y < 0 || this.pos.y > height;
+  }
+}
+
+// ============================================================
+//  ONDAS DE RESONANCIA CORPORAL (física + estética orgánica)
+// ============================================================
+class ResonanceWave {
+  constructor(origin, intensity) {
+    this.origin = origin.copy();
+    this.radius = 0.03 * S;
+    this.speed = (0.007 + 0.003 * audio.sens) * S;
+    this.maxRadius = 1.15 * S;
+    this.bandWidth = 0.08 * S;
+    this.initialIntensity = constrain(intensity, 0.4, 1.3);
+    this.energy = this.initialIntensity;
+    this.life = 0;
+    this.age = 0;
+    this.maxAge = Math.max(30, Math.floor(this.maxRadius / this.speed));
+    this.seed = random(1000);
+
+    // Color extraído armónicamente del mood activo
+    const mood = random() < moodMix ? moodB : moodA;
+    const c = random(pickPool(mood));
+    this.hue = (c[0] + random(-8, 8) + 360) % 360;
+    this.sat = constrain(c[1] + random(-5, 5), 10, 60);
+    this.bri = constrain(c[2] + random(-10, 0), 70, 100);
+  }
+
+  update() {
+    this.radius += this.speed;
+    this.age++;
+    this.life = constrain(this.age / this.maxAge, 0, 1);
+    this.energy = this.initialIntensity * Math.pow(1 - this.life, 1.4);
+    return this.life < 1 && this.radius < this.maxRadius;
+  }
+
+  draw() {
+    if (this.energy < 0.01) return;
+    const ctx = drawingContext;
+    const steps = 72;
+    const al = constrain(this.energy * (1 - this.life * 0.75) * 14 * emo.alphaMul, 0.3, 22);
+    if (al < 0.2) return;
+
+    ctx.save();
+    ctx.strokeStyle = hsbToCss(this.hue, this.sat, this.bri, al / 100);
+    ctx.lineWidth = constrain(1.5 * (1 - this.life * 0.5), 0.5, 2.0);
+    ctx.beginPath();
+
+    for (let i = 0; i <= steps; i++) {
+      const angle = (i / steps) * TWO_PI;
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+      // Variación orgánica en el contorno mediante ruido
+      const n = (noise(cosA * 1.5 + 20, sinA * 1.5 + 20, zoff * 0.6 + this.seed) - 0.5);
+      const r = this.radius + n * (0.07 * S * (0.3 + 0.7 * this.life));
+      const px = this.origin.x + cosA * r;
+      const py = this.origin.y + sinA * r;
+
+      if (i === 0) {
+        ctx.moveTo(px, py);
+      } else {
+        ctx.lineTo(px, py);
+      }
+    }
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function triggerResonanceWave() {
+  if (waveCooldown > 0) return;
+  if (resonanceWaves.length >= MAX_WAVES) return;
+  const intensity = constrain(audio.bass * 1.4 + audio.level * 0.5, 0.4, 1.4);
+  if (intensity < 0.25) return;
+  resonanceWaves.push(new ResonanceWave(torsoPos, intensity));
+  waveCooldown = 16;
+}
+
+function updateAndDrawResonanceWaves() {
+  if (waveCooldown > 0) waveCooldown--;
+  for (let i = resonanceWaves.length - 1; i >= 0; i--) {
+    const w = resonanceWaves[i];
+    const alive = w.update();
+    if (!alive) {
+      resonanceWaves.splice(i, 1);
+    } else {
+      w.draw();
+    }
   }
 }
 
